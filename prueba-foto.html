@@ -1040,13 +1040,13 @@ body.verano {
   border-radius: var(--card-radius);
   box-shadow: var(--card-shadow);
   overflow: hidden;
-  aspect-ratio: 3 / 1;
+  aspect-ratio: 5 / 1;          /* banner finito */
   background: var(--cream2);
 }
 .v-photo img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 55%; }
 .v-photo figcaption {
-  position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%);
-  font-family: 'Caveat', cursive; font-weight: 700; font-size: 22px; line-height: 1;
+  position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%);
+  font-family: 'Caveat', cursive; font-weight: 700; font-size: 19px; line-height: 1;
   color: var(--blue);
   background: rgba(251,247,238,0.94);
   border: 1.5px solid var(--blue);
@@ -1133,8 +1133,8 @@ body.verano {
   .verano .page::before, .verano .page::after { width: 10px; background-size: 10px 30px; }
 }
 @media (max-width: 600px) {
-  .v-photo { aspect-ratio: 3 / 2; }
-  .v-photo figcaption { font-size: 18px; bottom: 10px; padding: 4px 12px 5px; }
+  .v-photo { aspect-ratio: 2.6 / 1; }
+  .v-photo figcaption { font-size: 15.5px; bottom: 6px; padding: 3px 10px 4px; }
   .v-pz-tabs { gap: 8px; }
   .v-pz-tab { padding: 8px 4px 7px; }
   .v-pz-tab img { width: 54px; height: 44px; }
@@ -1355,16 +1355,28 @@ body.verano {
       return s ? s.charAt(0).toUpperCase() + s.slice(1) : "";
     }
 
-    // Fotos que cortan la lista de pizzas: una cada 12 tarjetas (12 = filas completas de 2 y de 3).
-    // Para sumar fotos, agregarlas acá; se reparten en orden por los grupos largos.
-    const PIZZA_PHOTOS = [
-      { img: "foto-puro-huevo", alt: "Pizza A Puro Huevo sobre tabla de madera", caption: "Recién salida del horno de barro" },
-    ];
-    const PHOTO_EVERY = 12;
+    // Fotos que cortan la lista de pizzas, por grupo.
+    // "at": después de cuántas tarjetas va cada foto ("end" = al final). 6 tarjetas = 2 filas de 3.
+    // Para cambiar una foto: reemplazar el archivo en assets/patio con el mismo nombre (o uno nuevo y cambiarlo acá).
+    const PIZZA_PHOTOS = {
+      "Clásicas": [
+        { at: 6,     img: "foto-pz-1", caption: "Recién salida del horno de barro" },
+        { at: 12,    img: "foto-pz-2" },
+        { at: 18,    img: "foto-pz-3" },
+        { at: "end", img: "foto-pz-4" },
+      ],
+      "Clásicas reversionadas": [
+        { at: 6,     img: "foto-pz-5", caption: "Masa madre, 24 horas de reposo" },
+      ],
+      "Especiales": [
+        { at: "end", img: "foto-pz-6", caption: "Hechas para compartir" },
+      ],
+    };
 
     function photoBanner(p) {
       const fig = el("figure", "v-photo");
-      const img = el("img"); img.src = `assets/patio/${p.img}.webp`; img.alt = p.alt; img.loading = "lazy";
+      const img = el("img"); img.src = `assets/patio/${p.img}.webp`; img.alt = ""; img.loading = "lazy";
+      fig.setAttribute("aria-hidden", "true");
       fig.appendChild(img);
       if (p.caption) fig.appendChild(el("figcaption", null, p.caption));
       return fig;
@@ -1387,7 +1399,6 @@ body.verano {
       }
       const used = groups.filter((g) => g.items.length);
 
-      let photoIdx = 0;
       const tabs = el("div", "v-pz-tabs");
       tabs.setAttribute("role", "tablist");
       const panels = [];
@@ -1420,10 +1431,11 @@ body.verano {
           card.appendChild(pr);
           grid.appendChild(card);
         }
-        // cortar las listas largas con una foto
+        // fotos que cortan la lista (según PIZZA_PHOTOS de este grupo)
         const cards = [...grid.children];
-        for (let k = PHOTO_EVERY; k < cards.length && photoIdx < PIZZA_PHOTOS.length; k += PHOTO_EVERY) {
-          cards[k].before(photoBanner(PIZZA_PHOTOS[photoIdx++]));
+        for (const p of PIZZA_PHOTOS[g.title] || []) {
+          if (p.at === "end" || p.at >= cards.length) grid.appendChild(photoBanner(p));
+          else cards[p.at].before(photoBanner(p));
         }
         panels.push(grid);
         b.addEventListener("click", () => select(gi, true));
