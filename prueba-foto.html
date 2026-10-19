@@ -1063,6 +1063,8 @@ body.verano {
   align-items: start;
   margin-top: 10px;
 }
+/* Si la sección tiene una sola tabla (ej. solo gaseosas o solo cervezas), va centrada */
+.v-beb:has(> .v-beb-card:only-child) { grid-template-columns: minmax(0, 520px); justify-content: center; }
 .v-beb-card {
   background: var(--paper);
   border: var(--card-border);
