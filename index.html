@@ -1075,6 +1075,8 @@ body.verano {
   margin-top: 10px;
 }
 /* Si la sección tiene una sola tabla (ej. solo gaseosas o solo cervezas), va centrada */
+/* Dos tablas (ej. Latas y Porrones): mismo ancho y mismo alto */
+.v-beb:not(:has(> .v-beb-side)) { grid-template-columns: 1fr 1fr; align-items: stretch; }
 .v-beb:has(> .v-beb-card:only-child) { grid-template-columns: minmax(0, 520px); justify-content: center; }
 .v-beb-card {
   background: var(--paper);
@@ -1158,7 +1160,7 @@ body.verano {
   .verano .v-pz-card .pizza-name { font-size: 15.5px; }
   .verano .v-pz-card .pizza-desc { font-size: 11.5px; }
   .v-pz-prices span { font-size: 13px; padding: 2px 6px 1px; }
-  .v-beb { grid-template-columns: 1fr; }
+  .v-beb, .v-beb:not(:has(> .v-beb-side)) { grid-template-columns: 1fr; }
 }
 @media (max-width: 600px) {
   /* Tarjetas con descripción: una por fila; las cortas (ensaladas, postres) siguen de a dos */
