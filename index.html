@@ -851,10 +851,10 @@ body.verano {
 .v-nav a {
   flex: none;
   font-family: 'Barlow Condensed', sans-serif;
-  font-size: 13px; font-weight: 700;
-  letter-spacing: 0.08em; text-transform: uppercase;
+  font-size: 11.5px; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase;
   color: var(--blue); text-decoration: none;
-  padding: 6px 13px;
+  padding: 4px 10px;
   border: 1.5px solid var(--blue);
   border-radius: 999px;
   background: var(--paper);
@@ -862,6 +862,11 @@ body.verano {
 }
 .v-nav a.active { background: var(--blue); color: var(--cream); transform: rotate(-2deg); }
 .v-nav:empty { display: none; }
+/* Escritorio: todas a la vista, centradas dentro del margen (si no entran, bajan a otra línea) */
+@media (min-width: 769px) {
+  .v-nav { flex-wrap: wrap; justify-content: center; gap: 6px; overflow: visible; margin: 16px 0 0; padding: 9px 0; }
+  .v-nav a:first-child, .v-nav a:last-child { margin: 0; }
+}
 
 /* ─── Secciones ─── */
 .verano .section { scroll-margin-top: 64px; }
@@ -1267,6 +1272,7 @@ body.verano {
       [/esper|empanad/i, "empanada-dorada", "Empanadas", "tilt-l"],
       [/sandwich|focac/i, "focaccia", "Sándwiches", "tilt-r"],
       [/pizza/i, "pizza", "Pizzas", ""],
+      [/papa/i, "papas-fritas", "Papas fritas", "tilt-r"],
       [/ensalad/i, "caesar-bowl", "Ensaladas", "tilt-l"],
       [/dulce|postre/i, "tiramisu", "Postres", "tilt-l"],
       [/sin alcohol/i, "cola", "Sin alcohol", "tall"],
@@ -1495,6 +1501,7 @@ body.verano {
           img.src = `assets/patio/${rule[1]}.webp`;
           img.alt = "";
           img.loading = "lazy";
+          img.onerror = () => fig.remove(); // ilustración todavía no subida: la sección queda sin dibujo
           fig.appendChild(img);
           sec.prepend(fig);
           watch.push(fig);
