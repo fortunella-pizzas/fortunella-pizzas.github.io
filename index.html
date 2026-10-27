@@ -1082,6 +1082,10 @@ body.verano {
   .v-beb:has(> .v-beb-side ~ .v-beb-side) > .v-beb-card:not(.v-beb-side) { grid-column: 1 / -1; }
 }
 /* Si la sección tiene una sola tabla (ej. solo gaseosas o solo cervezas), va centrada */
+/* Sección única de Bebidas: dos columnas de recuadros, cada uno con su alto natural */
+.v-beb.v-beb-cols { grid-template-columns: 1fr 1fr; align-items: start; }
+.v-beb-col { display: flex; flex-direction: column; gap: 16px; }
+.v-art img + img { margin-left: 10px; }
 .v-beb:has(> .v-beb-card:only-child) { grid-template-columns: minmax(0, 520px); justify-content: center; }
 .v-beb-card {
   background: var(--paper);
@@ -1165,7 +1169,9 @@ body.verano {
   .verano .v-pz-card .pizza-name { font-size: 15.5px; }
   .verano .v-pz-card .pizza-desc { font-size: 11.5px; }
   .v-pz-prices span { font-size: 13px; padding: 2px 6px 1px; }
-  .v-beb, .v-beb:not(:has(> .v-beb-side)) { grid-template-columns: 1fr; }
+  .v-beb, .v-beb:not(:has(> .v-beb-side)), .v-beb.v-beb-cols { grid-template-columns: 1fr; }
+  .v-beb-col { display: contents; }   /* una sola columna: los recuadros siguen el orden de la carta */
+  .v-beb.v-beb-cols { row-gap: 12px; }
 }
 @media (max-width: 600px) {
   /* Tarjetas con descripción: una por fila; las cortas (ensaladas, postres) siguen de a dos */
@@ -1199,7 +1205,7 @@ body.verano {
   .v-art img { width: 104px; }
   .v-art.tall img { height: 104px; }
   .verano .bottom-block { break-inside: avoid; }
-  #s-bebidas-con-alcohol { break-before: page; } /* cervezas, tragos, vinos y el pie juntos en la última hoja */
+  #s-bebidas { break-before: page; } /* cervezas, tragos, vinos y el pie juntos en la última hoja */
 }
 
 /* Pie: ramitas de fondo (detrás del texto) */
@@ -1320,7 +1326,7 @@ body.verano {
       return n;
     };
 
-    function buildBebidas(items) {
+    function buildBebidas(items, keepTitles = false) {
       const wrap = el("div", "v-beb");
       const groups = new Map();
       for (const it of items) {
@@ -1371,8 +1377,62 @@ body.verano {
         }
       }
       // Con una sola tabla, el título naranja repite el de la sección → se omite
-      if (wrap.children.length === 1) wrap.querySelector(".v-beb-title")?.remove();
+      if (!keepTitles && wrap.children.length === 1) wrap.querySelector(".v-beb-title")?.remove();
       return wrap;
+    }
+
+    // Bebidas sin y con alcohol en UNA sección "Bebidas" (igual que la carta impresa):
+    // dos columnas; Sin alcohol encabeza la izquierda, la primera de con alcohol (Porrones) la derecha,
+    // el resto va a la columna más corta. Cada recuadro con su alto natural.
+    function mergeBebidas(secs, mods, nav) {
+      const [first, ...rest] = secs;
+      const cards = mods.map((m) => [...buildBebidas(m.items, true).children]);
+      cards.flat().forEach((c) => {
+        const t = c.querySelector(".v-beb-title");
+        if (t) t.textContent = t.textContent.charAt(0).toUpperCase() + t.textContent.slice(1).toLowerCase(); // "Sin Alcohol" → "Sin alcohol"
+        c.classList.remove("v-beb-side");
+      });
+      cards.flat().forEach((c, i) => (c.style.order = i)); // en celular (una columna) vuelven al orden de la carta
+      const rows = (c) => c.querySelectorAll("tbody tr, .v-beb-row").length + 2;
+      const cols = [el("div", "v-beb-col"), el("div", "v-beb-col")], h = [0, 0];
+      const put = (c, i) => { cols[i].appendChild(c); h[i] += rows(c); };
+      const [a = [], b = []] = cards;
+      const firsts = b.length ? [a[0], b[0]] : a.slice(0, 2);
+      firsts.forEach((c, i) => c && put(c, i));
+      cards.flat().filter((c) => !firsts.includes(c)).sort((x, y) => rows(y) - rows(x))
+        .forEach((c) => put(c, h[0] <= h[1] ? 0 : 1));
+      const wrap = el("div", "v-beb v-beb-cols");
+      wrap.append(...cols);
+      first.querySelector(".v-beb").replaceWith(wrap);
+
+      // Título e ilustraciones (vaso + copa) en la primera; las demás secciones se quitan
+      first.querySelector(".sec-title").textContent = "Bebidas";
+      const fig = first.querySelector(".v-art");
+      rest.forEach((sec) => {
+        const img = sec.querySelector(".v-art img");
+        if (fig && img) fig.appendChild(img);
+        nav.querySelector(`a[href="#${sec.id}"]`)?.remove();
+        const sep = sec.previousElementSibling; // separador de cítrico que iba antes de esa sección
+        if (sep?.classList.contains("asterisk-row")) sep.remove();
+        sec.remove();
+      });
+      const link = nav.querySelector(`a[href="#${first.id}"]`);
+      first.id = "s-bebidas";
+      if (link) { link.href = "#s-bebidas"; link.textContent = "Bebidas"; }
+    }
+
+    // Todas las ilustraciones de sección ocupan la misma superficie → se ven del mismo tamaño
+    // (una redonda como la pizza y una alargada como la empanada), igual que en la carta impresa.
+    function sizeArt(img) {
+      const area = window.innerWidth <= 768 ? 11500 : 15800; // px² (≈ croquetas a 150 px de ancho)
+      const fit = () => {
+        const r = img.naturalWidth / img.naturalHeight;
+        if (!r) return;
+        const hh = Math.sqrt(area / r);
+        img.style.width = `${Math.round(hh * r)}px`;
+        img.style.height = `${Math.round(hh)}px`;
+      };
+      img.complete ? fit() : img.addEventListener("load", fit);
     }
 
 
@@ -1532,6 +1592,7 @@ body.verano {
           img.alt = "";
           img.loading = "lazy";
           img.onerror = () => fig.remove(); // ilustración todavía no subida: la sección queda sin dibujo
+          sizeArt(img);
           fig.appendChild(img);
           sec.prepend(fig);
           watch.push(fig);
@@ -1542,6 +1603,9 @@ body.verano {
         a.textContent = rule ? rule[2] : mod.name;
         nav.appendChild(a);
       });
+
+      const beb = sections.map((sec, i) => [sec, detail.modules[i]]).filter(([sec, m]) => m && sec.isConnected && sec.querySelector(".v-beb"));
+      if (beb.length > 1) mergeBebidas(beb.map(([s]) => s), beb.map(([, m]) => m), nav);
 
       // Aparición suave de las ilustraciones
       const io = new IntersectionObserver((entries) => {
