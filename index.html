@@ -1074,9 +1074,14 @@ body.verano {
   align-items: start;
   margin-top: 10px;
 }
-/* Si la sección tiene una sola tabla (ej. solo gaseosas o solo cervezas), va centrada */
 /* Dos tablas (ej. Latas y Porrones): mismo ancho y mismo alto */
 .v-beb:not(:has(> .v-beb-side)) { grid-template-columns: 1fr 1fr; align-items: stretch; }
+/* Una tabla y dos recuadros (ej. Porrones + Tragos + Vinos): tabla a todo el ancho, recuadros iguales debajo */
+@media (min-width: 769px) {
+  .v-beb:has(> .v-beb-side ~ .v-beb-side) { grid-template-columns: 1fr 1fr; align-items: stretch; }
+  .v-beb:has(> .v-beb-side ~ .v-beb-side) > .v-beb-card:not(.v-beb-side) { grid-column: 1 / -1; }
+}
+/* Si la sección tiene una sola tabla (ej. solo gaseosas o solo cervezas), va centrada */
 .v-beb:has(> .v-beb-card:only-child) { grid-template-columns: minmax(0, 520px); justify-content: center; }
 .v-beb-card {
   background: var(--paper);
@@ -1171,8 +1176,30 @@ body.verano {
 @media (prefers-reduced-motion: reduce) {
   .verano .reveal { opacity: 1; translate: none; transition: none; }
 }
+.v-pz-print-title { display: none; }
+/* Impresión A4: todas las pizzas a la vista (sin pestañas), nada cortado entre páginas */
 @media print {
-  .v-nav, .v-lights { display: none; }
+  @page { size: A4; margin: 8mm; }
+  .v-nav, .v-lights, .v-pz-tabs { display: none; }
+  .verano .page-inner { padding: 14px 22px; }
+  .verano .reveal { opacity: 1; translate: none; transition: none; }
+  .verano .section { break-inside: auto; }
+  .verano .sec-title, .v-art { break-after: avoid; }
+  .v-pz-grid[hidden] { display: grid; }
+  .v-pz-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 10px; }
+  .v-pz-print-title {
+    display: block; grid-column: 1 / -1; break-after: avoid;
+    font-family: 'Caveat', cursive; font-weight: 700; font-size: 26px; color: var(--orange); text-align: center; margin: 6px 0 0;
+  }
+  .verano :is(.pizza-item, .list-item, .postre-card, .v-beb-card, .v-photo) { break-inside: avoid; }
+  .verano .pizza-grid, .verano .items-list:has(.item-desc) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .v-beb:has(> .v-beb-side ~ .v-beb-side) { grid-template-columns: 1fr 1fr; }
+  .v-beb:has(> .v-beb-side ~ .v-beb-side) > .v-beb-card:not(.v-beb-side) { grid-column: 1 / -1; }
+  .v-photo { aspect-ratio: 7 / 1; }
+  .v-art img { width: 104px; }
+  .v-art.tall img { height: 104px; }
+  .verano .bottom-block { break-inside: avoid; }
+  #s-bebidas-con-alcohol { break-before: page; } /* cervezas, tragos, vinos y el pie juntos en la última hoja */
 }
 
 /* Pie: ramitas de fondo (detrás del texto) */
@@ -1458,6 +1485,7 @@ body.verano {
           if (p.at === "end" || p.at >= cards.length) grid.appendChild(photoBanner(p));
           else cards[p.at].before(photoBanner(p));
         }
+        grid.prepend(el("p", "v-pz-print-title", g.title)); // en papel no hay pestañas: cada grupo lleva su título
         panels.push(grid);
         b.addEventListener("click", () => select(gi, true));
       });
