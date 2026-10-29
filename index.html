@@ -1343,7 +1343,9 @@ body.verano {
           else plain.push({ name: it.name, price });
         }
         if (sized.length) {
-          const sizes = [...new Set(sized.map((s) => s.size))];
+          // columnas de menor a mayor (350ml, 500ml, 1L, 1,5L)
+          const ml = (t) => parseFloat(t.replace(",", ".")) * (/l$/i.test(t) && !/ml$/i.test(t) ? 1000 : 1);
+          const sizes = [...new Set(sized.map((s) => s.size))].sort((a, b) => ml(a) - ml(b));
           const bases = [...new Set(sized.map((s) => s.base))];
           const card = el("div", "v-beb-card");
           card.appendChild(el("p", "v-beb-title", subgroup ? `${subgroup}` : "Bebidas"));
