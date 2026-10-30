@@ -1364,6 +1364,14 @@ body.verano {
             }
             tb.appendChild(tr);
           }
+          // Sin tamaño pero del mismo grupo (ej. Limonada): en la misma tabla, con el precio a lo ancho de los tamaños
+          for (const p of plain.splice(0)) {
+            const tr = el("tr");
+            const td = el("td", "v-beb-price", p.price != null ? money(p.price) : "");
+            td.colSpan = sizes.length;
+            tr.append(el("td", "v-beb-name", p.name), td);
+            tb.appendChild(tr);
+          }
           card.appendChild(t);
           wrap.appendChild(card);
         }
